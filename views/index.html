@@ -1,16 +1,41 @@
+<!-- views/index.html -->
 <!DOCTYPE html>
-<html lang="en">
-
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Index</title>
-    <link rel="stylesheet" href="../css/style.css" />
+  <title>Online File Manager</title>
 </head>
-
 <body>
-    <h1>Index</h1>
-</body>
+  <h1>Online File Manager</h1>
 
+  <!-- File Upload -->
+  <h2>Upload File</h2>
+  <form action="/upload" method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" id="fileInput">
+    <button type="submit">Upload</button>
+  </form>
+
+  <!-- File List -->
+  <h2>File List</h2>
+  <ul id="fileList"></ul>
+
+  <script>
+    async function fetchFiles() {
+      const response = await fetch('/files');
+      const files = await response.json();
+      const fileList = document.getElementById('fileList');
+      fileList.innerHTML = '';
+      files.forEach(file => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = file;
+        a.textContent = file;
+        a.download = file;
+        li.appendChild(a);
+        fileList.appendChild(li);
+      });
+    }
+
+    window.onload = fetchFiles;
+  </script>
+</body>
 </html>
