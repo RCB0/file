@@ -1,4 +1,3 @@
-// server.js
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
@@ -8,16 +7,16 @@ const app = express();
 const port = 3434;
 
 // Serve static files
-app.use(express.static('uploads'));
-app.use(express.static('views'));
+app.use(express.static(path.join(__dirname, 'views')));
+app.use(express.static(path.join(__dirname, 'views', 'uploads')));
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'uploads/')
+    cb(null, path.join(__dirname, 'views', 'uploads'));
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname)
+    cb(null, file.originalname);
   }
 });
 const upload = multer({ storage: storage });
@@ -29,7 +28,7 @@ app.get('/', (req, res) => {
 
 // API route to list files
 app.get('/files', (req, res) => {
-  fs.readdir('uploads/', (err, files) => {
+  fs.readdir(path.join(__dirname, 'views', 'uploads'), (err, files) => {
     if (err) {
       return res.status(500).send('Unable to scan files');
     }

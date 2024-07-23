@@ -1,24 +1,71 @@
-<!-- views/index.html -->
 <!DOCTYPE html>
 <html>
 <head>
   <title>Online File Manager</title>
+  <style>
+    #uploadProgress, #downloadProgress {
+      width: 100%;
+      background-color: #f3f3f3;
+    }
+    #uploadBar, #downloadBar {
+      width: 0%;
+      height: 30px;
+      background-color: #4caf50;
+      text-align: center;
+      line-height: 30px;
+      color: white;
+    }
+  </style>
 </head>
 <body>
   <h1>Online File Manager</h1>
 
   <!-- File Upload -->
   <h2>Upload File</h2>
-  <form action="/upload" method="POST" enctype="multipart/form-data">
+  <form id="uploadForm" enctype="multipart/form-data">
     <input type="file" name="file" id="fileInput">
     <button type="submit">Upload</button>
   </form>
+  <div id="uploadProgress">
+    <div id="uploadBar">0%</div>
+  </div>
 
   <!-- File List -->
   <h2>File List</h2>
   <ul id="fileList"></ul>
+  <div id="downloadProgress">
+    <div id="downloadBar">0%</div>
+  </div>
 
   <script>
+    document.getElementById('uploadForm').onsubmit = async function(event) {
+      event.preventDefault();
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/upload', true);
+
+      xhr.upload.onprogress = function(event) {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          const uploadBar = document.getElementById('uploadBar');
+          uploadBar.style.width = percentComplete + '%';
+          uploadBar.textContent = Math.round(percentComplete) + '%';
+        }
+      };
+
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          fetchFiles();
+        }
+      };
+
+      xhr.send(formData);
+    };
+
     async function fetchFiles() {
       const response = await fetch('/files');
       const files = await response.json();
@@ -27,12 +74,44 @@
       files.forEach(file => {
         const li = document.createElement('li');
         const a = document.createElement('a');
-        a.href = file;
+        a.href = 'uploads/' + file;
         a.textContent = file;
         a.download = file;
+        a.onclick = (event) => downloadFile(event, file);
         li.appendChild(a);
         fileList.appendChild(li);
       });
+    }
+
+    async function downloadFile(event, file) {
+      event.preventDefault();
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', 'uploads/' + file, true);
+      xhr.responseType = 'blob';
+
+      xhr.onprogress = function(event) {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          const downloadBar = document.getElementById('downloadBar');
+          downloadBar.style.width = percentComplete + '%';
+          downloadBar.textContent = Math.round(percentComplete) + '%';
+        }
+      };
+
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          const url = window.URL.createObjectURL(xhr.response);
+          const a = document.createElement('a');
+          a.style.display = 'none';
+          a.href = url;
+          a.download = file;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+        }
+      };
+
+      xhr.send();
     }
 
     window.onload = fetchFiles;
