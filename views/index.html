@@ -15,6 +15,20 @@
       line-height: 30px;
       color: white;
     }
+    #dragDropArea {
+      width: 100%;
+      height: 200px;
+      border: 2px dashed #4caf50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #4caf50;
+      margin-top: 20px;
+    }
+    #dragDropArea.hover {
+      background-color: #e0ffe0;
+    }
   </style>
 </head>
 <body>
@@ -29,6 +43,9 @@
   <div id="uploadProgress">
     <div id="uploadBar">0%</div>
   </div>
+
+  <!-- Drag and Drop Area -->
+  <div id="dragDropArea">Drag and drop files here to upload</div>
 
   <!-- File List -->
   <h2>File List</h2>
@@ -45,6 +62,10 @@
       const formData = new FormData();
       formData.append('file', file);
 
+      uploadFile(formData);
+    };
+
+    function uploadFile(formData) {
       const xhr = new XMLHttpRequest();
       xhr.open('POST', '/upload', true);
 
@@ -64,7 +85,28 @@
       };
 
       xhr.send(formData);
-    };
+    }
+
+    function handleDrop(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      const files = event.dataTransfer.files;
+      const formData = new FormData();
+      for (let i = 0; i < files.length; i++) {
+        formData.append('file', files[i]);
+      }
+      uploadFile(formData);
+    }
+
+    function handleDragOver(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById('dragDropArea').classList.add('hover');
+    }
+
+    function handleDragLeave(event) {
+      document.getElementById('dragDropArea').classList.remove('hover');
+    }
 
     async function fetchFiles() {
       const response = await fetch('/files');
@@ -113,6 +155,11 @@
 
       xhr.send();
     }
+
+    const dragDropArea = document.getElementById('dragDropArea');
+    dragDropArea.addEventListener('dragover', handleDragOver);
+    dragDropArea.addEventListener('dragleave', handleDragLeave);
+    dragDropArea.addEventListener('drop', handleDrop);
 
     window.onload = fetchFiles;
   </script>
